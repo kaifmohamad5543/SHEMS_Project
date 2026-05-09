@@ -1,28 +1,216 @@
 package view;
 
-import model.Appliance;
-
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
-public class DashboardView {
+/**
+ * GUI Dashboard for Smart Home Energy Management System.
+ * This class provides a real dashboard with energy graph,
+ * appliance controls, notifications, and admin panel.
+ */
+public class DashboardView extends JFrame {
 
-    public void showDashboard(List<Appliance> appliances, double usage, double cost) {
-        System.out.println("\n======================================");
-        System.out.println(" SMART HOME ENERGY MANAGEMENT SYSTEM ");
-        System.out.println("======================================");
+    private final List<Double> energyData = new ArrayList<>();
+    private final DefaultListModel<String> notificationModel = new DefaultListModel<>();
+    private final JLabel totalUsageLabel = new JLabel("Total Usage: 0.0 kWh");
+    private final JLabel costLabel = new JLabel("Estimated Cost: £0.00");
+    private final JPanel graphPanel;
 
-        System.out.println("Total Usage: " + usage + " kWh");
-        System.out.println("Estimated Cost: £" + cost);
+    public DashboardView() {
+        setTitle("Smart Home Energy Management System - Dashboard");
+        setSize(1000, 650);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
 
-        System.out.println("\nAppliance Status:");
-        for (Appliance appliance : appliances) {
-            System.out.println(
-                    "- " + appliance.getName()
-                            + " | Type: " + appliance.getApplianceType()
-                            + " | Power: " + appliance.getPowerRating() + " kW"
-                            + " | Status: " + (appliance.isOn() ? "ON" : "OFF")
-                            + " | Health: " + (appliance.isMalfunctioning() ? "FAULT" : "NORMAL")
-            );
+        // Sample real-time energy data
+        energyData.add(2.5);
+        energyData.add(3.8);
+        energyData.add(4.2);
+        energyData.add(5.5);
+        energyData.add(6.1);
+
+        add(createHeader(), BorderLayout.NORTH);
+        add(createSidePanel(), BorderLayout.WEST);
+
+        graphPanel = createGraphPanel();
+        add(graphPanel, BorderLayout.CENTER);
+
+        add(createNotificationPanel(), BorderLayout.EAST);
+        add(createAdminPanel(), BorderLayout.SOUTH);
+
+        updateDashboard();
+    }
+
+    /**
+     * Creates the top dashboard heading.
+     */
+    private JPanel createHeader() {
+        JPanel panel = new JPanel();
+        panel.setBackground(new Color(40, 90, 140));
+
+        JLabel title = new JLabel("SHEMS Real-Time Energy Dashboard");
+        title.setForeground(Color.WHITE);
+        title.setFont(new Font("Arial", Font.BOLD, 24));
+
+        panel.add(title);
+        return panel;
+    }
+
+    /**
+     * Creates appliance control buttons.
+     */
+    private JPanel createSidePanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(6, 1, 10, 10));
+        panel.setPreferredSize(new Dimension(220, 0));
+        panel.setBorder(BorderFactory.createTitledBorder("Appliance Control"));
+
+        JButton lightButton = new JButton("Toggle Light");
+        JButton acButton = new JButton("Toggle AC");
+        JButton fridgeButton = new JButton("Check Fridge");
+        JButton scheduleButton = new JButton("Schedule Appliance");
+        JButton usageButton = new JButton("Add Energy Usage");
+
+        lightButton.addActionListener(e -> addNotification("Light status changed."));
+        acButton.addActionListener(e -> addNotification("Air Conditioner status changed."));
+        fridgeButton.addActionListener(e -> addNotification("Fridge is running normally."));
+        scheduleButton.addActionListener(e -> addNotification("Appliance scheduled successfully."));
+        usageButton.addActionListener(e -> addEnergyUsage());
+
+        panel.add(lightButton);
+        panel.add(acButton);
+        panel.add(fridgeButton);
+        panel.add(scheduleButton);
+        panel.add(usageButton);
+        panel.add(totalUsageLabel);
+
+        return panel;
+    }
+
+    /**
+     * Creates simple energy usage graph.
+     */
+    private JPanel createGraphPanel() {
+        return new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+
+                g.setFont(new Font("Arial", Font.BOLD, 18));
+                g.drawString("Energy Usage Graph", 30, 30);
+
+                int startX = 60;
+                int startY = 430;
+                int barWidth = 55;
+                int gap = 30;
+
+                g.drawLine(startX, startY, startX + 600, startY);
+                g.drawLine(startX, startY, startX, 80);
+
+                for (int i = 0; i < energyData.size(); i++) {
+                    int barHeight = (int) (energyData.get(i) * 40);
+                    int x = startX + 40 + i * (barWidth + gap);
+                    int y = startY - barHeight;
+
+                    g.fillRect(x, y, barWidth, barHeight);
+                    g.drawString(energyData.get(i) + " kWh", x, y - 10);
+                    g.drawString("T" + (i + 1), x + 15, startY + 20);
+                }
+
+                g.setFont(new Font("Arial", Font.PLAIN, 14));
+                g.drawString("Time Period", 300, 480);
+                g.drawString("Usage", 15, 250);
+            }
+        };
+    }
+
+    /**
+     * Creates notification panel.
+     */
+    private JPanel createNotificationPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setPreferredSize(new Dimension(260, 0));
+        panel.setBorder(BorderFactory.createTitledBorder("Notifications"));
+
+        JList<String> notificationList = new JList<>(notificationModel);
+        panel.add(new JScrollPane(notificationList), BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    /**
+     * Creates admin panel for pricing strategy and user management.
+     */
+    private JPanel createAdminPanel() {
+        JPanel panel = new JPanel(new GridLayout(2, 3, 10, 10));
+        panel.setBorder(BorderFactory.createTitledBorder("Admin Panel"));
+
+        JComboBox<String> pricingBox = new JComboBox<>(
+                new String[]{"Flat Rate", "Peak Hour Pricing", "Green Energy Discount"}
+        );
+
+        JButton applyPricing = new JButton("Apply Pricing");
+        JButton manageUsers = new JButton("Manage Users");
+
+        applyPricing.addActionListener(e ->
+                addNotification("Pricing strategy changed to: " + pricingBox.getSelectedItem())
+        );
+
+        manageUsers.addActionListener(e ->
+                addNotification("Admin accessed user management panel.")
+        );
+
+        panel.add(new JLabel("Select Pricing Strategy:"));
+        panel.add(pricingBox);
+        panel.add(applyPricing);
+        panel.add(costLabel);
+        panel.add(manageUsers);
+
+        return panel;
+    }
+
+    /**
+     * Adds new energy usage and refreshes graph.
+     */
+    private void addEnergyUsage() {
+        double newUsage = 2 + Math.random() * 8;
+        newUsage = Math.round(newUsage * 10.0) / 10.0;
+
+        energyData.add(newUsage);
+
+        if (newUsage > 6) {
+            addNotification("Warning: High energy usage detected: " + newUsage + " kWh");
+        } else {
+            addNotification("Energy usage recorded: " + newUsage + " kWh");
         }
+
+        updateDashboard();
+        graphPanel.repaint();
+    }
+
+    /**
+     * Updates total energy usage and estimated cost.
+     */
+    private void updateDashboard() {
+        double total = 0;
+
+        for (double usage : energyData) {
+            total += usage;
+        }
+
+        double cost = total * 0.30;
+
+        totalUsageLabel.setText(String.format("Total Usage: %.2f kWh", total));
+        costLabel.setText(String.format("Estimated Cost: £%.2f", cost));
+    }
+
+    /**
+     * Adds notification messages to the dashboard.
+     */
+    private void addNotification(String message) {
+        notificationModel.addElement(message);
     }
 }

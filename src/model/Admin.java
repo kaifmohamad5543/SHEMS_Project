@@ -20,3 +20,4 @@ public class Admin extends User {
         System.out.println("Role: Admin - manages users and pricing strategies.");
     }
 }
+

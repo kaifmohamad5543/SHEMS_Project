@@ -1,6 +1,8 @@
 package view;
 
 import cloud.CloudDeploymentService;
+import controller.EnergyController;
+import pattern.FlatRatePricing;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,7 +55,7 @@ public class LoginPage extends JFrame {
 
     private void login() {
 
-        String username = usernameField.getText();
+        String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword());
 
         if (username.equals("admin") && password.equals("admin123")) {
@@ -65,9 +67,22 @@ public class LoginPage extends JFrame {
 
             dispose();
 
-            DashboardView dashboard = new DashboardView();
+            EnergyController controller = new EnergyController();
 
-            dashboard.showMessage(
+            controller.addAppliance("light", 1, "Living Room Light", 0.5);
+            controller.addAppliance("ac", 2, "Bedroom Air Conditioner", 2.0);
+            controller.addAppliance("fridge", 3, "Kitchen Fridge", 1.2);
+
+            controller.turnOnAppliance("Living Room Light");
+            controller.turnOnAppliance("Bedroom Air Conditioner");
+            controller.turnOnAppliance("Kitchen Fridge");
+
+            controller.setPricingStrategy(new FlatRatePricing());
+
+            DashboardView dashboard = new DashboardView(controller);
+
+            JOptionPane.showMessageDialog(
+                    dashboard,
                     "Admin authenticated successfully. Dashboard access granted."
             );
 

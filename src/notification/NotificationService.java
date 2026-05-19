@@ -3,6 +3,8 @@ package notification;
 /**
  * NotificationService simulates Email and SMS notifications
  * for high energy usage and appliance malfunction alerts.
+ * i used the obderver pattern
+ *
  */
 public class NotificationService {
 
